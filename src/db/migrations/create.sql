@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS cart CASCADE;
+
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price INTEGER NOT NULL
+);
+
+CREATE TABLE cart (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    orderQuantity INTEGER
+);
