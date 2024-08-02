@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "tsnd --inspect -- src/index.ts"
+    "dev": "tsnd --inspect -- src/index.ts",
+    "db:reset": "psql -d product_cart -U postgres -f src/db/migrations/create.sql && psql -d product_cart -U postgres -f src/db/seed.sql"
+
   },
   "keywords": [],
   "author": "",

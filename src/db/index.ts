@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, Pool } from "pg";
 
 export const client = new Client({
     host: "localhost",
@@ -8,7 +8,7 @@ export const client = new Client({
     database: "product_cart"
 });
 
-export const pool = new Client({
+export const pool = new Pool({
     host: "localhost",
     port: 5432,
     user: "postgres",

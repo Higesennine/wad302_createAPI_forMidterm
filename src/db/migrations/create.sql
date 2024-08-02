@@ -10,6 +10,6 @@ CREATE TABLE products (
 
 CREATE TABLE cart (
     id SERIAL PRIMARY KEY,
-    product_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
-    orderQuantity INTEGER
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    order_quantity INTEGER
 );
