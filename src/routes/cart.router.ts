@@ -6,6 +6,7 @@ cartRouter.get(("/"),(req: Request, res: Response) => {
     res.json();
 })
 
+//api/v1/products/:id/cart/:id
 cartRouter.get(("/:id"),(req: Request, res: Response) => {
     res.json();
 })

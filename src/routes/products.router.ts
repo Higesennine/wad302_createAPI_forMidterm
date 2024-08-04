@@ -46,10 +46,44 @@ router.post(("/"), async (req: Request, res: Response) => {
     res.status(201).json(data.rows[0]);
 })
 
-router.put(("/:id"),(req: Request, res: Response) => {
-    res.json();
+router.put(("/:id"), async (req: Request, res: Response) => {
+    const {id} = req.params;
+    const data = await pool.query(`
+        SELECT * FROM products WHERE id = $1;
+        `, [id]);
+
+    const product = data.rows[0];
+
+    if(!product) {
+        res.status(404).json({error: 404, message: `Record with id ${id} does not exist.`});
+    }
+
+    const {title, description} = req.body;
+
+    const updated = await pool.query(`
+        UPDATE projects
+        SET title = $1, description = $2
+        WHERE id = $3
+        RETURNING *
+        `, [title, description, id]);
+
+    res.json(updated.rows[0]);
 })
 
-router.delete(("/:id"),(req: Request, res: Response) => {
-    res.json();
-})
+router.delete(("/:id"), async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const data = await pool.query(`
+        SELECT * FROM products WHERE = id;
+        `, [id]);
+    const product = data.rows[0];
+
+    if(!product) {
+        res.status(404).json({error:404, message: `Record with id ${id} does not exist.`});
+    }
+
+    const deleted = await pool.query(`
+        DELETE FROM products WHERE id = $1 RETURNING *
+        `, [id]);
+
+    res.json(deleted.rows[0]);
+});

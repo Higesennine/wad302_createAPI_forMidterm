@@ -4,6 +4,6 @@ VALUES
     ('Shoes', 100);
 
 INSERT INTO
-    cart(product_id)
+    cart(product_id, order_quantity)
 VALUES
-    (1);
+    (1, 1);
