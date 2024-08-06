@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { router as productsRouter } from "./products.router";
+import { cartRouter } from "./cart.router";
 
 export const apiRouter = Router();
 
-const ROUTER = [{ url: "/products", router: productsRouter }];
+const ROUTER = [{ url: "/cart", router: cartRouter }];
 
 ROUTER.forEach(({url, router}) => {
     apiRouter.use(url, router);

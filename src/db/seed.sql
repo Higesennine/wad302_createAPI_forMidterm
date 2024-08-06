@@ -1,9 +1,9 @@
-INSERT INTO 
-    products(name, price)
-VALUES
-    ('Shoes', 100);
-
 INSERT INTO
-    cart(product_id, order_quantity)
+    cart(item_quantity)
 VALUES
-    (1, 1);
+    (1);
+
+INSERT INTO 
+    products(name, cart_id, price, order_quantity)
+VALUES
+    ('Shoes', 1, 100, 1);

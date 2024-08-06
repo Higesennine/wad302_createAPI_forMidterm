@@ -1,6 +1,5 @@
 import { Request, Response, Router } from "express";
-import { cartRouter } from "./cart.router";
-import { pool } from "../db";
+import { client, pool } from "../db";
 
 // export type Product = {
 //     id: number;
@@ -9,81 +8,118 @@ import { pool } from "../db";
 //     price: number;
 // };
 
-export const router = Router();
+export const productsRouter = Router({ mergeParams: true });
+// api/v1/cart/:cartId/products
+productsRouter.get("/", async (req: Request, res: Response) => {
+    const cartId = +req.params.cartId;
 
-router.use("/:productId/cart", cartRouter)
+    const data = await pool.query(`
+        SELECT * FROM cart WHERE id = $1;
+        `, [cartId]);
+    const cart = data.rows[0];
+    if (!cart) {
+        res.status(404).json({ error: 404, message: `id: ${cartId} does not exist` })
+    }
 
-router.get("/", async (req: Request, res: Response) => {
     try {
-        const data = await pool.query(`SELECT * FROM products;`);
+        const data = await pool.query(`SELECT * FROM products WHERE cart_id = $1;`, [cartId]);
         res.json(data.rows);
-    } catch(err) {
+    } catch (err) {
         console.log(err);
-        res.json({meesage: err})
+        res.json({ meesage: err })
     }
 })
 
-router.get("/:id", async (req: Request, res: Response) => {
-    const id = req.params.id;
+productsRouter.get("/:productId", async (req: Request, res: Response) => {
+    const { cartId, productId } = req.params;
 
     const data = await pool.query(`
         SELECT * FROM products WHERE id = $1;
-        `, [id]);
+        `, [cartId]);
 
-        const product = data.rows[0];
+    const cart = data.rows[0];
+    if (!cart) {
+        res.status(404).json({ error: 404, message: `id:${cartId} does not exist` })
+    }
+
+    const productdata = await pool.query(`
+        SELECT * FROM products WHERE id = $1 AND cart_id = $2;
+        `, [productId, cartId]);
+
+    const product = productdata.rows[0];
+
+    if (!product) {
+        res.status(404).json({ error: 404, message: `Product id: ${productId} does not exist` });
+        return;
+    }
 
     res.json(product);
 })
 
-router.post(("/"), async (req: Request, res: Response) => {
-    const {name, price} = req.body;
+productsRouter.post(("/"), async (req: Request, res: Response) => {
+    const cartId = req.params.cartId;
+    const { name, price, order_quantity} = req.body;
 
     const data = await pool.query(`
-        INSERT INTO products (name, price) VALUES ($1, $2) RETURNING *;
-        `, [name, price]
+        INSERT INTO products (cart_id, name, price, order_quantity) VALUES ($1, $2, $3, $4) RETURNING *;
+        `, [cartId, name, price, order_quantity]
     );
 
     res.status(201).json(data.rows[0]);
 })
 
-router.put(("/:id"), async (req: Request, res: Response) => {
-    const {id} = req.params;
-    const data = await pool.query(`
-        SELECT * FROM products WHERE id = $1;
-        `, [id]);
+productsRouter.put(("/:productId"), async (req: Request, res: Response) => {
+    const { cartId, productId } = req.params;
+    const cartData = await pool.query(`
+        SELECT * FROM cart WHERE id = $1;
+        `, [cartId]);
 
-    const product = data.rows[0];
+    const cart = cartData.rows[0];
 
-    if(!product) {
-        res.status(404).json({error: 404, message: `Record with id ${id} does not exist.`});
+    if (!cart) {
+        res.status(404).json({ error: 404, message: `Record with id ${cartId} does not exist.` });
     }
 
-    const {title, description} = req.body;
+    const { name, price, order_quantity } = req.body;
 
     const updated = await pool.query(`
-        UPDATE projects
-        SET title = $1, description = $2
-        WHERE id = $3
+        UPDATE products
+        SET name = $1, price = $2, order_quantity = $3
+        WHERE id = $4 AND cart_id = $5
         RETURNING *
-        `, [title, description, id]);
+        `, [name, price, order_quantity, productId, cartId]);
 
     res.json(updated.rows[0]);
 })
 
-router.delete(("/:id"), async (req: Request, res: Response) => {
-    const id = req.params.id;
-    const data = await pool.query(`
-        SELECT * FROM products WHERE = id;
-        `, [id]);
-    const product = data.rows[0];
+productsRouter.delete(("/:productId"), async (req: Request, res: Response) => {
+    const { cartId, productId } = req.params;
 
-    if(!product) {
-        res.status(404).json({error:404, message: `Record with id ${id} does not exist.`});
+    const data = await pool.query(`
+        SELECT * FROM cart WHERE id = $1;
+        `, [cartId]);
+    const cart = data.rows[0];
+
+    if (!cart) {
+        res.status(404).json({ error: 404, message: `Record with id ${cartId} does not exist.` });
+        return;
     }
 
     const deleted = await pool.query(`
-        DELETE FROM products WHERE id = $1 RETURNING *
-        `, [id]);
+        DELETE FROM products WHERE id = $1 AND cart_id = $2 RETURNING *
+        `, [productId, cartId]);
+
+    // if (deleted.rows.length > 1) {
+    //     await client.query("ROLLBACK");
+
+    //     res.status(500).json({
+    //         error: 500,
+    //         message: `something went wrong while deleting the task with id ${productId}`
+    //     });
+    //     return;
+    // }
+
+    // await client.query("COMMIT");
 
     res.json(deleted.rows[0]);
 });
